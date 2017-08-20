@@ -19,6 +19,8 @@ package com.android.volley.toolbox;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Request.Method;
+import com.android.volley.VolleyLog;
+import com.nostra13.universalimageloader.utils.IoUtils;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -32,8 +34,12 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -50,6 +56,7 @@ import javax.net.ssl.SSLSocketFactory;
 public class HurlStack implements HttpStack {
 
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
+    private static final String HEADER_CONTENT_LENGTH = "Content-Length";
 
     /**
      * An interface for transforming URLs before use.
@@ -249,9 +256,14 @@ public class HurlStack implements HttpStack {
 
     private static void addBodyIfExists(HttpURLConnection connection, Request<?> request)
             throws IOException, AuthFailureError {
-        byte[] body = request.getBody();
+        Object body = request.getBody();
         if (body != null) {
-            addBody(connection, request, body);
+            if (body instanceof byte[])
+                addBody(connection, request, (byte[])body);
+            else if (body instanceof File)
+                addBody(connection, request, (File)body);
+            else
+                throw new ClassCastException("getBody() must return byte[] or File");
         }
     }
 
@@ -265,5 +277,30 @@ public class HurlStack implements HttpStack {
         DataOutputStream out = new DataOutputStream(connection.getOutputStream());
         out.write(body);
         out.close();
+    }
+
+    private static void addBody(HttpURLConnection connection, Request<?> request, File body) throws IOException {
+        // Prepare output. There is no need to set Content-Length explicitly,
+        // since this is handled by setFixedLengthStreamingMode.
+        connection.setDoOutput(true);
+        connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
+        connection.setFixedLengthStreamingMode(body.length());
+
+        InputStream fis = new FileInputStream(body);
+        OutputStream os = null;
+        try {
+            os = connection.getOutputStream();
+            IoUtils.copyStream(fis, os, new CopyListener());
+        } finally {
+            IoUtils.closeSilently(os);
+            IoUtils.closeSilently(fis);
+        }
+    }
+
+    private static class CopyListener implements IoUtils.CopyListener {
+        @Override
+        public boolean onBytesCopied(int current, int total) {
+            return true;
+        }
     }
 }
