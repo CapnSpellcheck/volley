@@ -35,7 +35,6 @@ android {
 }
 
 dependencies {
-    provided 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
 }
 
 apply from: 'rules.gradle'

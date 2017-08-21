@@ -20,7 +20,6 @@ import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Request.Method;
 import com.android.volley.VolleyLog;
-import com.nostra13.universalimageloader.utils.IoUtils;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -56,7 +55,6 @@ import javax.net.ssl.SSLSocketFactory;
 public class HurlStack implements HttpStack {
 
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
-    private static final String HEADER_CONTENT_LENGTH = "Content-Length";
 
     /**
      * An interface for transforming URLs before use.
@@ -256,14 +254,11 @@ public class HurlStack implements HttpStack {
 
     private static void addBodyIfExists(HttpURLConnection connection, Request<?> request)
             throws IOException, AuthFailureError {
-        Object body = request.getBody();
+        byte[] body = request.getBody();
         if (body != null) {
-            if (body instanceof byte[])
-                addBody(connection, request, (byte[])body);
-            else if (body instanceof File)
-                addBody(connection, request, (File)body);
-            else
-                throw new ClassCastException("getBody() must return byte[] or File");
+                addBody(connection, request, body);
+        } else if (request.providesBodyInCallback()) {
+            request.provideBody(connection);
         }
     }
 
@@ -279,28 +274,4 @@ public class HurlStack implements HttpStack {
         out.close();
     }
 
-    private static void addBody(HttpURLConnection connection, Request<?> request, File body) throws IOException {
-        // Prepare output. There is no need to set Content-Length explicitly,
-        // since this is handled by setFixedLengthStreamingMode.
-        connection.setDoOutput(true);
-        connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
-        connection.setFixedLengthStreamingMode(body.length());
-
-        InputStream fis = new FileInputStream(body);
-        OutputStream os = null;
-        try {
-            os = connection.getOutputStream();
-            IoUtils.copyStream(fis, os, new CopyListener());
-        } finally {
-            IoUtils.closeSilently(os);
-            IoUtils.closeSilently(fis);
-        }
-    }
-
-    private static class CopyListener implements IoUtils.CopyListener {
-        @Override
-        public boolean onBytesCopied(int current, int total) {
-            return true;
-        }
-    }
 }

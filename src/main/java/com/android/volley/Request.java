@@ -25,6 +25,7 @@ import android.text.TextUtils;
 import com.android.volley.VolleyLog.MarkerLog;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Map;
@@ -432,7 +433,7 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      *
      * @throws AuthFailureError in the event of auth failure
      */
-    public Object getBody() throws AuthFailureError {
+    public byte[] getBody() throws AuthFailureError {
         Map<String, String> params = getParams();
         if (params != null && params.size() > 0) {
             return encodeParameters(params, getParamsEncoding());
@@ -490,6 +491,21 @@ public abstract class Request<T> implements Comparable<Request<T>> {
      */
     public final boolean shouldRetryServerErrors() {
         return mShouldRetryServerErrors;
+    }
+
+    /**
+     * Should provide body to connection directly. Override.
+     */
+    public boolean providesBodyInCallback() {
+        return false;
+    }
+
+    /**
+     * Override to use something such as an InputStream or ContentResolver to send the body.
+     * Configure the connection with an appropriate streaming mode.
+     * @param connection
+     */
+    public void provideBody(HttpURLConnection connection) {
     }
 
     /**

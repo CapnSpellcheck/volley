@@ -39,8 +39,6 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
 import java.io.IOException;
-import java.io.InvalidClassException;
-import java.io.InvalidObjectException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,12 +145,9 @@ public class HttpClientStack implements HttpStack {
 
     private static void setEntityIfNonEmptyBody(HttpEntityEnclosingRequestBase httpRequest,
             Request<?> request) throws AuthFailureError {
-        Object body = request.getBody();
+        byte[] body = request.getBody();
         if (body != null) {
-            if (!(body instanceof byte[])) {
-                throw new RuntimeException("Requests used with HttpClientStack must provide byte[] body");
-            }
-            HttpEntity entity = new ByteArrayEntity((byte[])body);
+            HttpEntity entity = new ByteArrayEntity(body);
             httpRequest.setEntity(entity);
         }
     }
