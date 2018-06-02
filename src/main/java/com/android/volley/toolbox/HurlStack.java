@@ -252,7 +252,7 @@ public class HurlStack extends BaseHttpStack {
                 addBody(connection, request, body);
         } else if (request.providesBodyInCallback()) {
             connection.setDoOutput(true);
-            connection.addRequestProperty(HEADER_CONTENT_TYPE, request.getBodyContentType());
+            connection.addRequestProperty(HttpHeaderParser.HEADER_CONTENT_TYPE, request.getBodyContentType());
             request.provideBody(connection);
         }
     }
