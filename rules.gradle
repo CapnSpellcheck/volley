@@ -15,6 +15,14 @@ android {
   }
 }
 
+tasks.withType(JavaCompile) {
+  options.compilerArgs << "-Xlint:unchecked" << "-Werror"
+}
+
+dependencies {
+  provided "com.android.support:support-annotations:27.1.1"
+}
+
 // Check if the android plugin version supports unit testing.
 if (configurations.findByName("testCompile")) {
   dependencies {

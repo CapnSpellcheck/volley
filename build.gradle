@@ -25,14 +25,28 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.github.sherter.google-java-format" version "0.6"
+    id "net.ltgt.errorprone" version "0.0.13"
+}
+
+googleJavaFormat {
+    toolVersion = '1.5'
+    options style: 'AOSP'
+}
+
 apply plugin: 'com.android.library'
 
 repositories {
     jcenter()
+    maven {
+        url 'https://maven.google.com/'
+        name 'Google'
+    }
 }
 
 group = 'com.android.volley'
-version = '1.1.0-SNAPSHOT'
+version = '1.1.1-SNAPSHOT'
 
 android {
     compileSdkVersion 26
@@ -40,6 +54,10 @@ android {
 }
 
 dependencies {
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xep:ParameterComment:ERROR"
 }
 
 apply from: 'rules.gradle'
