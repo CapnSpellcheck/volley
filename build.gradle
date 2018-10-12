@@ -54,7 +54,6 @@ android {
         minSdkVersion = 8
     }
     compileSdkVersion 26
-    buildToolsVersion = '27.0.3'
 }
 
 dependencies {
