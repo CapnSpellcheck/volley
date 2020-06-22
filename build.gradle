@@ -13,6 +13,7 @@
 // this instead:
 //     include(":volley")
 //     project(':volley').buildFileName = 'rules.gradle'
+import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
     repositories {
@@ -27,7 +28,7 @@ buildscript {
 
 plugins {
     id "com.github.sherter.google-java-format" version "0.6"
-    id "net.ltgt.errorprone" version "0.0.13"
+    id "net.ltgt.errorprone" version "0.6.1"
 }
 
 googleJavaFormat {
@@ -49,18 +50,27 @@ group = 'com.android.volley'
 version = '1.1.1-SNAPSHOT'
 
 android {
+    compileSdkVersion 28
+    buildToolsVersion = '28.0.3'
 
     defaultConfig {
-        minSdkVersion = 8
+        minSdkVersion 8
     }
-    compileSdkVersion 26
 }
 
 dependencies {
+    // NOTE: Updating ErrorProne introduces new checks that may cause the build to fail. Pin to a
+    // specific version to control these updates.
+    errorprone("com.google.errorprone:error_prone_core:2.3.2")
+    // ErrorProne requires a JDK 9 compiler, so pull one in as a dependency since we use Java 8:
+    // https://github.com/tbroyer/gradle-errorprone-plugin#jdk-8-support
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xep:ParameterComment:ERROR"
+    options.errorprone {
+        check("ParameterComment", CheckSeverity.ERROR)
+    }
 }
 
 apply from: 'rules.gradle'
